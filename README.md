@@ -2,7 +2,7 @@
 
 Selected code from a production Shopify store I build and run: a designer's catalog of house plans, sold direct and through national plan marketplaces. The pieces here are the ones a Shopify developer or store owner can read and reuse. They have been lightly edited so they carry no client data: no store names, domains, account numbers, contract terms or customer information.
 
-This is a curated sample, not the whole toolkit. The sales software behind the store (it reads years of order and marketplace emails into one ledger), the desktop apps and the store's full theme stay private.
+This is a curated sample, not the whole toolkit. The sales software behind the store (it reads years of order and marketplace emails into one ledger) stays private apart from the excerpts below, and so do the desktop apps and the store's full theme.
 
 Case study with results: [atlasdigital.design/work/intertwine/](https://atlasdigital.design/work/intertwine/)
 
@@ -16,6 +16,7 @@ Case study with results: [atlasdigital.design/work/intertwine/](https://atlasdig
 | `tools/pinterest/pin_compose.py` | Composes four pin layouts per product from renders and floor plans with Pillow. Names are measured and shrunk or wrapped to fit, and captions come from the file actually used. |
 | `tools/pricing/sale_price.py` | A sitewide sale as a real price change through the Admin GraphQL API: capture a rollback file first, dry run, apply on a typed confirmation, re-read and diff every write, restore verbatim from the file. |
 | `tools/split-engine/` | The allocation core of a revenue-split app: `Decimal` money, the fee and every share allocated from the gross in one largest-remainder pass so the parts always reconcile to the cent, and weights validated at load. Tests run against an invented example contract. The app around it is not included. |
+| `tools/sales-ledger/` | Excerpts from the sales ledger: money and date parsing that tolerates every format the channels send, order-id cleanup, flags for sitewide sales a marketplace runs without labeling them (an exact percentage markdown on one plan, confirmed when a second plan shows the same discount within ten days), and the regression check that compares each release against a frozen, hand-checked baseline. Synthetic tests only. |
 
 ## How the work is checked
 
@@ -26,6 +27,8 @@ Each change shipped on the store was proposed before it was made, verified again
 ```bash
 cd tools/split-engine
 python3 -m unittest test_splits -v
+cd ../sales-ledger
+python3 -m unittest test_ledger_excerpts -v
 ```
 
 ## Contact
