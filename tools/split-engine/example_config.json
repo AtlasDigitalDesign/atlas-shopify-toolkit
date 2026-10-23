@@ -1,0 +1,24 @@
+{
+  "_readme": [
+    "Example deployment config. Everything client-specific lives in a file like this one.",
+    "Split weights are SHARES OF THE ADJUSTED NET (gross minus the card fee).",
+    "A group may be written either way:",
+    "  flat            -> {\"marketing\": 0.10, \"client\": 0.85, \"agency\": 0.05}  (must total 1.0)",
+    "  remainder_split -> {\"marketing\": 0.10, \"remainder_split\": {\"client\": 0.60, \"agency\": 0.40}}",
+    "The remainder_split form takes marketing off the top, then divides what is left.",
+    "The partner and the percentages here are invented for the example."
+  ],
+  "client": {"name": "Example Studio", "code": "EXS"},
+  "agency": {"name": "Atlas Digital Design", "short_name": "Atlas", "code": "ADD"},
+  "splits": {
+    "cc_fee_rate": 0.03,
+    "plans_and_addons": {
+      "label": "Plans & Add-ons",
+      "marketing": 0.10,
+      "remainder_split": {"client": 0.60, "agency": 0.40},
+      "alternate_split": {"label": "50/50", "client": 0.50, "agency": 0.50}
+    },
+    "modifications": {"label": "Modifications", "marketing": 0.10, "client": 0.85, "agency": 0.05},
+    "digital_assets": {"label": "Digital Assets", "marketing": 0.0, "client": 0.50, "agency": 0.50}
+  }
+}
