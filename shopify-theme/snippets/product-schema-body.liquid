@@ -1,0 +1,214 @@
+{% comment %}
+  JSON-LD Product schema BODY for a house plan store. Aug 2026, revised through Oct 2026.
+  House plans have no schema.org type of their own, so each plan is a Product whose
+  specifications (square footage, bedrooms, width and depth in feet, foundation,
+  framing) are emitted as numbers in additionalProperty, read from plan_specs metafields.
+  Rendered from sections/product.liquid INSIDE its existing
+  <script type="application/ld+json"> tags, replacing the default
+  {{ product | structured_data }} filter. Outputs the bare JSON object only —
+  no <script> wrapper here. Breadcrumb schema lives in
+  snippets/product-schema-breadcrumbs.liquid (rendered from layout/theme.liquid).
+  Pulls plan specs from plan_specs / plans_specs metafields.
+  [ATLAS V6 8/26] alternateName fixed: metafield OBJECT was piped to | json,
+  emitting {"error":"json not allowed for this object"}. Now uses .value.
+  [ATLAS V16 9/30] alternateName also reads custom.also_known_as (marketplace name).
+{% endcomment %}
+{%- liquid
+  assign bedrooms = product.metafields.plan_specs.bedrooms | default: product.metafields.plans_specs.bedrooms
+  assign bathrooms = product.metafields.plan_specs.bathrooms | default: product.metafields.plans_specs.bathrooms
+-%}
+{%- capture props -%}
+  {%- if product.metafields.plan_specs.plan_type != blank -%}
+    {"@type":"PropertyValue","name":"Plan Type","value":{{ product.metafields.plan_specs.plan_type | json }}},
+  {%- endif -%}
+  {%- if product.metafields.plan_specs.square_footage != blank -%}
+    {"@type":"PropertyValue","name":"Square Footage","value":{{ product.metafields.plan_specs.square_footage | json }},"unitCode":"FTK"},
+  {%- endif -%}
+  {%- if bedrooms != blank -%}
+    {"@type":"PropertyValue","name":"Bedrooms","value":{{ bedrooms | json }}},
+  {%- endif -%}
+  {%- if product.metafields.plan_specs.optional_bedrooms != blank -%}
+    {"@type":"PropertyValue","name":"Optional Bedrooms","value":{{ product.metafields.plan_specs.optional_bedrooms | json }}},
+  {%- endif -%}
+  {%- if bathrooms != blank -%}
+    {"@type":"PropertyValue","name":"Bathrooms","value":{{ bathrooms | json }}},
+  {%- endif -%}
+  {%- if product.metafields.plan_specs.optional_bathrooms != blank -%}
+    {"@type":"PropertyValue","name":"Optional Bathrooms","value":{{ product.metafields.plan_specs.optional_bathrooms | json }}},
+  {%- endif -%}
+  {%- if product.metafields.plan_specs.stories != blank -%}
+    {"@type":"PropertyValue","name":"Stories","value":{{ product.metafields.plan_specs.stories | json }}},
+  {%- endif -%}
+  {%- if product.metafields.plan_specs.footprint != blank -%}
+    {"@type":"PropertyValue","name":"Footprint","value":{{ product.metafields.plan_specs.footprint | json }}},
+  {%- endif -%}
+  {%- if product.metafields.plan_specs.width_ft.value != blank -%}
+    {"@type":"PropertyValue","name":"Width","value":{{ product.metafields.plan_specs.width_ft.value | json }},"unitCode":"FOT","unitText":"ft"},
+  {%- endif -%}
+  {%- if product.metafields.plan_specs.depth_ft.value != blank -%}
+    {"@type":"PropertyValue","name":"Depth","value":{{ product.metafields.plan_specs.depth_ft.value | json }},"unitCode":"FOT","unitText":"ft"},
+  {%- endif -%}
+  {%- if product.metafields.plan_specs.foundation_type != blank -%}
+    {"@type":"PropertyValue","name":"Foundation Type","value":{{ product.metafields.plan_specs.foundation_type | json }}},
+  {%- endif -%}
+  {%- if product.metafields.plan_specs.elevation != blank -%}
+    {"@type":"PropertyValue","name":"Elevation","value":{{ product.metafields.plan_specs.elevation | json }}},
+  {%- endif -%}
+  {%- if product.metafields.plan_specs.framing != blank -%}
+    {"@type":"PropertyValue","name":"Framing","value":{{ product.metafields.plan_specs.framing | json }}},
+  {%- endif -%}
+  {%- if product.metafields.plan_specs.roof_framing != blank -%}
+    {"@type":"PropertyValue","name":"Roof Framing","value":{{ product.metafields.plan_specs.roof_framing | json }}},
+  {%- endif -%}
+  {%- if product.metafields.plan_specs.roof_pitch != blank -%}
+    {"@type":"PropertyValue","name":"Roof Pitch","value":{{ product.metafields.plan_specs.roof_pitch | json }}},
+  {%- endif -%}
+  {%- if product.metafields.plan_specs.max_ridge_height != blank -%}
+    {"@type":"PropertyValue","name":"Max Ridge Height","value":{{ product.metafields.plan_specs.max_ridge_height | json }}},
+  {%- endif -%}
+  {%- if product.metafields.plan_specs.ceiling_height != blank -%}
+    {"@type":"PropertyValue","name":"Ceiling Height","value":{{ product.metafields.plan_specs.ceiling_height | json }}},
+  {%- endif -%}
+  {%- if product.metafields.plan_specs.garage != blank -%}
+    {"@type":"PropertyValue","name":"Garage","value":{{ product.metafields.plan_specs.garage | json }}},
+  {%- endif -%}
+  {%- if product.metafields.plan_specs.adu_included != blank -%}
+    {"@type":"PropertyValue","name":"ADU Included","value":{{ product.metafields.plan_specs.adu_included | json }}},
+  {%- endif -%}
+  {%- comment -%} [ATLAS V8 9/16] license and contents stated in structured form as well as on the page {%- endcomment -%}
+  {"@type":"PropertyValue","name":"License","value":"Licensed for one build at the buyer's build address; additional build licenses available on request"},
+  {"@type":"PropertyValue","name":"Plan Set Includes","value":"Cover sheet with general notes, foundation plan, dimensioned floor plans for every level, four exterior elevations, cross section, roof plan, electrical plans, door and window schedules"},
+  {"@type":"PropertyValue","name":"Not Included","value":"Engineer's stamp, site plan, engineered floor and roof framing, mechanical and plumbing drawings, energy compliance; provided locally"},
+  {"@type":"PropertyValue","name":"Delivery","value":"Digital download; PDF, PDF plus CAD, or Chief Architect files"},
+  {%- comment -%} [ATLAS V9 9/19] the engines read spec blocks first ; the designer belongs in the block, not only in prose {%- endcomment -%}
+  {"@type":"PropertyValue","name":"Designer","value":{{ shop.name | json }}},
+  {%- unless template == 'product.study-set' -%}
+  {"@type":"PropertyValue","name":"Sold By","value":{{ shop.name | prepend: 'Direct from the designer, ' | append: '; the price is for the full construction set, licensed for one build' | json }}},
+  {%- endunless -%}
+{%- endcapture -%}
+{%- assign props = props | strip -%}
+{%- assign props_last = props | slice: -1 -%}
+{%- if props_last == ',' -%}
+  {%- assign props_len = props.size | minus: 1 -%}
+  {%- assign props = props | slice: 0, props_len -%}
+{%- endif -%}
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "@id": {{ shop.url | append: product.url | json }},
+  "name": {{ product.title | json }},
+  {%- comment -%}
+    [ATLAS V16 9/30] alternateName carries two things now: the subtitle it already
+    carried (custom.product_subtitle, a LIST of single-line text, so .value is an
+    array) and custom.also_known_as, the name a plan sells under on a marketplace
+    (single-line text, set per product). Both present: the subtitle array with the
+    alias appended. Subtitle only: the array, as before. Alias only: a string.
+    Neither: no key. The marketplace is never named.
+  {%- endcomment -%}
+  {%- assign alt_subtitle = product.metafields.custom.product_subtitle.value -%}
+  {%- assign alt_aka = product.metafields.custom.also_known_as.value -%}
+  {%- if alt_subtitle != blank and alt_aka != blank -%}
+  {%- assign alt_aka_arr = alt_aka | split: '|||' -%}
+  {%- assign alt_all = alt_subtitle | concat: alt_aka_arr %}
+  "alternateName": {{ alt_all | json }},
+  {%- elsif alt_subtitle != blank %}
+  "alternateName": {{ alt_subtitle | json }},
+  {%- elsif alt_aka != blank %}
+  "alternateName": {{ alt_aka | json }},
+  {%- endif %}
+  {%- comment -%}
+    [ATLAS 9/25] The body minus its opening "Modify This Plan" call to action,
+    so the Product block describes the plan rather than the button. The text
+    is split on the button label and everything after it kept; a body with no
+    button is kept whole; an empty result falls back to the SEO description.
+  {%- endcomment -%}
+  {%- assign desc_parts = product.description | strip_html | split: 'Modify This Plan' -%}
+  {%- if desc_parts.size > 1 -%}{%- assign schema_description = desc_parts | slice: 1, 20 | join: ' ' -%}{%- else -%}{%- assign schema_description = desc_parts | first -%}{%- endif -%}
+  {%- assign schema_description = schema_description | strip | truncate: 500 -%}
+  {%- if schema_description == blank -%}{%- assign schema_description = product.metafields.global.description_tag | default: page_description -%}{%- endif -%}
+  "description": {{ schema_description | json }},
+  "url": {{ shop.url | append: product.url | json }},
+  "productID": {{ product.handle | json }},
+  "sku": {{ product.variants.first.sku | default: product.handle | json }},
+  {% if product.metafields.plan_specs.plan_type != blank %}
+  "category": {{ product.metafields.plan_specs.plan_type | json }},
+  {% endif %}
+  {%- comment -%}
+    [ATLAS 9/25] Footprint as numbers (answer engines re-tabulate spec blocks and left the width
+    column blank while the footprint only existed as prose). plan_specs.width_ft and
+    depth_ft are decimal feet set from each plan's spec list; unitCode FOT is UN/CEFACT for foot.
+  {%- endcomment -%}
+  {%- if product.metafields.plan_specs.width_ft.value != blank and product.metafields.plan_specs.depth_ft.value != blank -%}
+  "width": {"@type": "QuantitativeValue", "value": {{ product.metafields.plan_specs.width_ft.value | json }}, "unitCode": "FOT", "unitText": "ft"},
+  "depth": {"@type": "QuantitativeValue", "value": {{ product.metafields.plan_specs.depth_ft.value | json }}, "unitCode": "FOT", "unitText": "ft"},
+  {%- endif -%}
+  "brand": {
+    "@type": "Brand",
+    "name": {{ shop.name | json }}
+  },
+  "manufacturer": {"@id": {{ shop.url | append: '/#organization' | json }}},
+  "itemCondition": "https://schema.org/NewCondition",
+  "image": [
+    {% for image in product.images limit: 20 %}
+      {{ image.src | json }}{% unless forloop.last %},{% endunless %}
+    {% endfor %}
+  ],
+  {%- comment -%}
+    [ATLAS V21 10/15] One Offer per variant instead of one AggregateOffer over
+    the file formats. Google's product-snippet guidance reserves AggregateOffer
+    for several sellers of the same thing; here every variant is the same
+    seller and a different package (PDF, PDF + CAD, Chief Architect, each with
+    its foundation options), so each one is an Offer with its own name, price,
+    availability and ?variant= URL. Prices come from the variants, so they keep
+    matching the catalog as they did under the aggregate. Shipping and return
+    terms are stated on every offer (Google reads them per offer). Every plan
+    page used the aggregate pattern before this change.
+  {%- endcomment -%}
+  "offers": [
+    {%- for variant in product.variants %}
+    {
+      "@type": "Offer",
+      "name": {{ variant.title | json }},
+      "sku": {{ variant.sku | default: variant.id | json }},
+      "url": {{ shop.url | append: variant.url | json }},
+      "priceCurrency": {{ shop.currency | json }},
+      "price": {{ variant.price | divided_by: 100.0 | json }},
+      "availability": {% if variant.available %}"https://schema.org/InStock"{% else %}"https://schema.org/OutOfStock"{% endif %},
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "@id": {{ shop.url | append: '/#organization' | json }},
+        "name": {{ shop.name | json }},
+        "url": {{ shop.url | json }}
+      },
+      "shippingDetails": {
+        "@type": "OfferShippingDetails",
+        "shippingRate": {
+          "@type": "MonetaryAmount",
+          "value": "0",
+          "currency": "USD"
+        },
+        "deliveryTime": {
+          "@type": "ShippingDeliveryTime",
+          "handlingTime": {
+            "@type": "QuantitativeValue",
+            "minValue": 0,
+            "maxValue": 0,
+            "unitCode": "DAY"
+          }
+        },
+        "shippingDestination": {
+          "@type": "DefinedRegion",
+          "addressCountry": "US"
+        }
+      },
+      "hasMerchantReturnPolicy": {
+        "@type": "MerchantReturnPolicy",
+        "applicableCountry": "US",
+        "returnPolicyCategory": "https://schema.org/MerchantReturnNotPermitted"
+      }
+    }{% unless forloop.last %},{% endunless %}
+    {%- endfor %}
+  ]{% if props != blank %},
+  "additionalProperty": [{{ props }}]{% endif %}
+}
