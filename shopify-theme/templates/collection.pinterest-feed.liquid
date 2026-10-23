@@ -1,0 +1,204 @@
+{%- # theme-check-disable -%}
+{%- comment -%} theme-check parses every .liquid file as HTML, where <link>
+    is a void element and <channel> does not exist - so it reports
+    "Attempting to close HtmlElement 'link' before 'channel' was closed"
+    on valid RSS 2.0. This file is XML, not HTML. Verified against the live
+    URL with a strict DOMParser: 66 items, parses true, 0 unescaped
+    ampersands. The linter is wrong about a file that is not HTML.
+    Whitespace-stripping markers are REQUIRED on both tags: the XML declaration
+    must be the first byte of the response, and a stray newline ahead of it
+    makes a strict parser reject the whole document. {%- endcomment -%}
+{%- layout none -%}
+{%- comment -%}
+================================================================================
+  PINTEREST PRODUCT FEED (RSS 2.0, Google Merchant g: namespace)
+  Jeff Combs, Atlas Digital Design · 4 September 2026
+  templates/collection.pinterest-feed.liquid
+  Live at:  /collections/all?view=pinterest-feed
+================================================================================
+
+  WHY THIS EXISTS
+  The native Shopify->Pinterest integration emits one catalog row per VARIANT and
+  appends ?variant=<id> to every link. Verified 4 Sep: that made one plan render
+  at more than twice its entry price depending on which pin was clicked, and only
+  about one catalog row in five carried the entry price. It also sends body_html as the
+  description, which now opens with the modification CTA, and it emits no
+  item_group_id and no UTMs.
+
+  None of that is fixable inside the native app. This template replaces it:
+  one row per plan, the entry price, a clean link, the SEO description.
+
+  PHASE CONTROL — read this before pasting
+  ----------------------------------------
+  PHASE A (default below): one plan, and a DELIBERATELY NON-COLLIDING id.
+     Proves the feed parses and the fields populate, with zero risk to the
+     existing 322 catalog items because it targets none of their ids.
+  PHASE B: set test_id_suffix to blank. Same single plan, now using the REAL
+     base-tier variant id. Force ingestion and check within 24h, before the
+     Shopify app's next sync, whether the item UPDATED or DUPLICATED.
+  PHASE C: set test_handles to blank to expose all 66 plans. Expect EXACTLY 66
+     (verified 5 Sept: 66 active Plan Sets, 45 Study Sets excluded by type).
+     Then let BOTH sources overlap for one sync cycle and confirm the Liquid rows
+     won before severing Shopify. Corrected 5 Sept: the earlier instruction said
+     sever immediately. That is backwards. If Shopify wins the race we are merely
+     back to the status quo and can retry; if we sever first and the feed has a
+     problem at 66-scale, the catalog has no source at all. Overlap, verify, cut.
+     SEVER MEANS: stop the Shopify app's CATALOG feed only. Do NOT uninstall the
+     Pinterest sales channel app without first confirming what else it carries -
+     the domain claim and the Pinterest tag are worth more than this feed.
+{%- endcomment -%}
+
+{%- comment -%} ============ PHASE SETTINGS ============ {%- endcomment -%}
+{%- assign test_handles = '' -%}
+{%- assign test_id_suffix = '' -%}
+{%- assign shop_url = shop.url -%}
+
+{%- capture utm -%}utm_source=pinterest&amp;utm_medium=product_pin&amp;utm_campaign=catalog{%- endcapture -%}
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
+<channel>
+<title>{{ shop.name | escape }}</title>
+<link>{{ shop_url }}</link>
+<description>Designer-direct coastal, elevated and garage/ADU house plans.</description>
+{%- comment -%} paginate is REQUIRED: a bare Liquid for loop caps at 50 iterations,
+    so without it the feed would silently ship 50 of 66 plans. Shopify allows a
+    page_size of 1-250, and Pinterest fetches the bare URL (page 1 only), so this
+    holds the whole catalog on one page TODAY. CEILING: if the catalog ever passes
+    250 Plan Sets, this feed truncates without erroring. Verified 5 Sept: 66 active
+    Plan Sets, 45 Study Sets excluded by the product.type filter above. {%- endcomment -%}
+{%- paginate collections.all.products by 250 -%}
+{%- for product in collections.all.products -%}
+
+  {%- comment -%} Plan Sets only. Study sets stay off Pinterest by decision:
+      every one reuses its plan's own render, so publishing them would add
+      duplicate-image items competing with the plan pins. {%- endcomment -%}
+  {%- unless product.type == 'Plan Set' -%}{%- continue -%}{%- endunless -%}
+  {%- unless product.available -%}{%- continue -%}{%- endunless -%}
+  {%- if test_handles != blank -%}
+    {%- assign wanted = test_handles | split: ',' -%}
+    {%- unless wanted contains product.handle -%}{%- continue -%}{%- endunless -%}
+  {%- endif -%}
+
+  {%- comment -%} The BASE tier is variant #1 (PDF Set / Pier). Its id is what the
+      native integration already uses for that row, so reusing it is what lets
+      Pinterest update the existing item instead of minting a new pin with no
+      history. {%- endcomment -%}
+  {%- assign v = product.variants.first -%}
+
+  {%- comment -%} .value on every one. A metafield renders its value when output,
+      but a comparison against the OBJECT is always false - `adu == true` would be
+      silently wrong forever and every plan would file as a House Plan. {%- endcomment -%}
+  {%- comment -%} Namespace insurance. A historical typo split this data: the
+      CORRECT `plan_specs` namespace holds bedrooms_filter / bathrooms_filter,
+      while the misspelled `plans_specs` holds differently-named keys, bedrooms
+      and bathrooms. Verified 4 Sept across all 66 active plan sets: every one
+      has BOTH, so this fallback never fires today. It is here so a plan created
+      later with only the typo namespace still renders rather than shipping a
+      blank spec to Pinterest. Note the key names differ between namespaces —
+      chaining to plans_specs.bedrooms_FILTER would be a no-op. {%- endcomment -%}
+  {%- assign beds   = product.metafields.plan_specs.bedrooms_filter.value  | default: product.metafields.plans_specs.bedrooms.value -%}
+  {%- assign baths  = product.metafields.plan_specs.bathrooms_filter.value | default: product.metafields.plans_specs.bathrooms.value -%}
+  {%- assign band   = product.metafields.plan_specs.sqft_range.value -%}
+
+  {%- comment -%} A studio has 0 bedrooms, which is CORRECT data but renders as
+      "0 Bedroom" in product_type and "0BR" in custom_label_2. Verified 5 Sept:
+      one studio garage plan is the only one this hits. Compare
+      against both 0 and '0' - a metafield .value may arrive as either. {%- endcomment -%}
+  {%- if beds == 0 or beds == '0' -%}
+    {%- assign bed_node  = 'Studio' -%}
+    {%- assign bed_short = 'Studio' -%}
+  {%- else -%}
+    {%- capture bed_node  -%}{{ beds }} Bedroom{%- endcapture -%}
+    {%- capture bed_short -%}{{ beds }}BR{%- endcapture -%}
+  {%- endif -%}
+  {%- assign elev   = product.metafields.plan_specs.elevation.value -%}
+  {%- assign found  = product.metafields.plan_specs.foundation_type.value -%}
+  {%- assign ptype  = product.metafields.plan_specs.plan_type.value -%}
+  {%- assign adu    = product.metafields.plan_specs.adu_included.value -%}
+  {%- assign studyv = product.metafields.custom.study_set_variant_id.value -%}
+
+  {%- comment -%} Description: the SEO metafield, NOT body_html. This is the whole
+      point — body_html now opens with "Would you like to customize this plan?"
+      and that is the first thing a person reads on an organic pin closeup. {%- endcomment -%}
+  {%- assign desc = product.metafields.global.description_tag.value | default: product.description | strip_html -%}
+
+  {%- comment -%} product_type: a real hierarchy. Pinterest accepts 5 levels and
+      states deeper hierarchies help checkout propensity. {%- endcomment -%}
+  {%- comment -%} adu_included is present on all but one plan, which
+      lacks it. That plan IS a house plan, so a missing value falling to the else
+      branch is already correct. Fails safe. {%- endcomment -%}
+  {%- if adu == true -%}
+    {%- assign l1 = 'Garage &amp; ADU Plans' -%}
+  {%- else -%}
+    {%- assign l1 = 'House Plans' -%}
+  {%- endif -%}
+  {%- if elev == 'Elevated' -%}{%- assign l3 = found -%}{%- else -%}{%- assign l3 = found | default: 'Slab' -%}{%- endif -%}
+
+<item>
+  <g:id>{{ v.id }}{{ test_id_suffix }}</g:id>
+  <g:item_group_id>{{ product.handle }}</g:item_group_id>
+  <title>{{ product.title | strip_html | escape | truncate: 100, "" }}</title>
+  <g:description>{{ desc | escape | truncate: 500, "" }}</g:description>
+
+  {%- comment -%} THE FIX. Canonical product URL, no ?variant=, so every pin lands
+      on the entry price. UTMs so Pinterest stops arriving as unattributable
+      referral traffic. {%- endcomment -%}
+  <link>{{ shop_url }}/products/{{ product.handle }}?{{ utm }}&amp;utm_content={{ product.handle }}</link>
+  {%- comment -%} image_url returns a protocol-relative //cdn.shopify.com URL. The
+      same thing broke the modification email in August - force the scheme. {%- endcomment -%}
+  {%- assign img = product.featured_image | image_url: width: 1000 -%}
+  {%- if img contains 'http' -%}{%- assign img_abs = img -%}{%- else -%}{%- assign img_abs = img | prepend: 'https:' -%}{%- endif -%}
+  {%- comment -%} `| escape` is not optional. image_url appends its size parameter
+      with a RAW ampersand (…jpg?v=1771195111&width=1000), which XML reads as a
+      broken entity reference and rejects the whole document. Caught 4 Sept by
+      running the live feed through a strict DOMParser — a browser renders it
+      fine, so this is invisible without an actual XML parse. {%- endcomment -%}
+  <g:image_link>{{ img_abs | escape }}</g:image_link>
+
+  <g:availability>in stock</g:availability>
+  <g:condition>new</g:condition>
+  <g:brand>{{ shop.name | escape }}</g:brand>
+  {%- comment -%} VERIFIED 4 Sept from the store's Google Merchant Center account: the Shopify integration sends
+      google_product_category = 8022, and GMC approves every item on it. This is
+      the known-good numeric ID, not a guess. Pinterest accepts the numeric form.
+      (Label not resolved from here — Google's taxonomy file is blocked by egress.
+      It is readable in the GMC product editor if the human-readable path is ever
+      needed.) {%- endcomment -%}
+  <g:google_product_category>8022</g:google_product_category>
+  <g:product_type>{{ l1 }} &gt; Coastal &gt; {{ l3 | escape }} &gt; {{ bed_node }} &gt; {{ band | escape }}</g:product_type>
+
+  {%- comment -%} List price and sale price kept the right way round: g:price is
+      compare-at, g:sale_price is what they pay. Verified the strikethrough and
+      "16% off" badge already render correctly from these. {%- endcomment -%}
+  {%- if v.compare_at_price > v.price -%}
+  <g:price>{{ v.compare_at_price | money_without_currency | remove: ',' }} USD</g:price>
+  <g:sale_price>{{ v.price | money_without_currency | remove: ',' }} USD</g:sale_price>
+  {%- else -%}
+  <g:price>{{ v.price | money_without_currency | remove: ',' }} USD</g:price>
+  {%- endif -%}
+
+  {%- comment -%} REVENUE TIER. custom_label_0 used to repeat the square-footage
+      band, which product_type already carries at level 5, so the slot was free.
+      Tier A is the hand-kept list of plans the order ledger shows actually sell;
+      tier B is the right segment but unproven; tier C browses and does not buy.
+      Used to decide where fresh creative and ad spend go.
+      NOTE: hand-maintained. Revisit against the order ledger, not from memory.
+      The handles below are placeholders; the store's real list is not published. {%- endcomment -%}
+  {%- assign tier_a = 'example-plan-one,example-plan-two,example-plan-three' | split: ',' -%}
+  {%- if tier_a contains product.handle -%}
+    {%- assign tier = 'tier-a-proven' -%}
+  {%- elsif elev == 'Elevated' or ptype == 'Garage + ADU Plan' -%}
+    {%- assign tier = 'tier-b-segment' -%}
+  {%- else -%}
+    {%- assign tier = 'tier-c-slow' -%}
+  {%- endif -%}
+  <g:custom_label_0>{{ tier }}</g:custom_label_0>
+  <g:custom_label_1>{{ elev | default: 'Standard' | escape }}</g:custom_label_1>
+  <g:custom_label_2>{{ bed_short }}-{{ baths }}BA</g:custom_label_2>
+  <g:custom_label_3>{{ ptype | escape }}</g:custom_label_3>
+  <g:custom_label_4>{% if studyv != blank %}study-set-yes{% else %}study-set-no{% endif %}</g:custom_label_4>
+</item>
+{%- endfor -%}
+{%- endpaginate -%}
+</channel>
+</rss>
