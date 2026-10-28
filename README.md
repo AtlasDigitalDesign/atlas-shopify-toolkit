@@ -10,7 +10,7 @@ Case study with results: [atlasdigital.design/work/intertwine/](https://atlasdig
 
 | Path | What it is |
 |---|---|
-| `shopify-theme/snippets/product-schema-body.liquid` | Product JSON-LD for a product type with no schema.org vocabulary. Plan specs come from metafields and go out as numbers (width and depth in feet with UN/CEFACT unit codes), one `Offer` per variant with shipping and return terms, and a stable `@id` graph shared with the Organization and collection markup. |
+| `shopify-theme/snippets/product-schema-body.liquid` | Product JSON-LD for house plans. Plan specs come from metafields and go out as numbers (width and depth in feet with UN/CEFACT unit codes), one `Offer` per variant with shipping and return terms, and a stable `@id` graph shared with the Organization and collection markup. |
 | `shopify-theme/snippets/collection-schema.liquid` | `CollectionPage` + `ItemList` + `BreadcrumbList`. The item list is suppressed on paginated views, so the markup never lists products the page does not show. |
 | `shopify-theme/templates/collection.pinterest-feed.liquid` | A replacement Pinterest catalog feed in Liquid: RSS 2.0 with the Google Merchant `g:` namespace, one row per product at its entry price, tagged links, and a phased cutover plan in the header. Written after the native integration was found advertising variant prices well above the entry price. |
 | `tools/pinterest/pin_compose.py` | Composes four pin layouts per product from renders and floor plans with Pillow. Names are measured and shrunk or wrapped to fit, and captions come from the file actually used. |
