@@ -1,6 +1,6 @@
 # Shopify work samples
 
-Selected code from a production Shopify store I build and run: a designer's catalog of house plans, sold direct and through national plan marketplaces. The pieces here are the ones a Shopify developer or store owner can read and reuse. They have been lightly edited so they carry no client data: no store names, domains, account numbers, contract terms or customer information.
+Selected code from [Intertwine House Plans](https://intertwinehouseplans.com), a production Shopify store I build and run for house designer Angela Kamer: her catalog of house plans, sold direct and through national plan marketplaces. The pieces here are the ones a Shopify developer or store owner can read and reuse. They have been lightly edited so they carry no private client data: no account numbers, contract terms or customer information.
 
 This is a curated sample, not the whole toolkit. The sales software behind the store (it reads years of order and marketplace emails into one ledger) stays private apart from the excerpts below, and so do the desktop apps and the store's full theme.
 
